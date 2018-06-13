@@ -11,6 +11,7 @@ goroutine pool 使用了 [workerpool](https://github.com/gammazero/workerpool) �
 ### 构建运行
 
 **运行项目**
+
 ```bash
 $ git clone https://github.com/chenjiandongx/photo-go.git
 $ cd photo-go
@@ -19,6 +20,7 @@ $ go run core.go
 ```
 
 **图片数据**
+
 图片地址数据保存在了 `data.txt`，共 17w+ 张照片，图片的数据是我从 [mmjpg](https://github.com/chenjiandongx/mmjpg) 和 [mzitu](https://github.com/chenjiandongx/mzitu) 里提取出来的。
 ```bash
 $ wc -l data.txt
@@ -26,6 +28,7 @@ $ wc -l data.txt
 ```
 
 **运行效果**
+
 ![效果图](https://user-images.githubusercontent.com/19553554/41359931-28bc5e5a-6f5e-11e8-81ad-0ab5c4f6e26e.gif)
 
 
