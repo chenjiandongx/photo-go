@@ -1,5 +1,10 @@
 # 美女写真图爬虫 Golang 版
 
+*其他版本*
+
+* [photo-asyncio 版](https://github.com/chenjiandongx/photo-asyncio)
+* [photo-gevent 版](https://github.com/chenjiandongx/photo-gevent)
+
 ### goroutine
 最近发现 Golang 其实也是一门很有趣的语言，goroutine 并发模式很特别，所以决定拿个爬虫来试试。觉得还是拿妹子爬虫来试可能比较好一点，毕竟兴趣是最好的老师...
 
