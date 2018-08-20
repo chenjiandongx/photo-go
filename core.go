@@ -114,17 +114,11 @@ func main() {
 	start := time.Now()
 	f, _ := os.Open(URLS_DATA)
 	scanner := bufio.NewScanner(bufio.NewReader(f))
-	urlIsRead := make(chan bool)
 	for scanner.Scan() {
+		url := scanner.Text()
 		wp.Submit(func() {
-			url := scanner.Text()
-			urlIsRead <- true
 			downloadPics(url)
 		})
-		select {
-		case <-urlIsRead:
-			break
-		}
 	}
 	// 等待所有任务完成
 	wp.StopWait()
