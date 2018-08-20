@@ -45,7 +45,7 @@ func createDir(path string) {
 }
 
 // 返回请求响应内容
-func getResponse(url string) *http.Response {
+func getResponse(url string) (*http.Response, error) {
 	var ref string
 	// 根据 url 确定 header Referer 字段
 	if strings.HasPrefix(url, "http://i.meizitu.net/") {
@@ -55,11 +55,17 @@ func getResponse(url string) *http.Response {
 		ref = "http://www.mmjpg.com"
 	}
 	client := &http.Client{}
-	request, _ := http.NewRequest("GET", url, nil)
+	request, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
 	request.Header.Set("User-Agent", USER_AGENT)
 	request.Header.Set("Referer", ref)
-	response, _ := client.Do(request)
-	return response
+	response, err := client.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	return response, nil
 }
 
 // 下载图片
@@ -74,12 +80,12 @@ func downloadPics(url string) {
 	fmt.Println("Download pics:", fileName)
 	var resp *http.Response
 	for retry := 0; retry < RETRY_TIMES; retry++ {
-		resp = getResponse(url)
-		if resp != nil && resp.StatusCode == 200 {
+		resp, err = getResponse(url)
+		if err == nil && resp.StatusCode == 200 {
 			break
 		}
 	}
-	if resp != nil && resp.StatusCode != 200 {
+	if resp == nil || resp.StatusCode != 200 {
 		fmt.Println("Failed requesting " + url)
 		return
 	}
