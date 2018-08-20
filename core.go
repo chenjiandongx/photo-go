@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/gammazero/workerpool"
 	"io"
 	"math/rand"
 	"net/http"
@@ -12,6 +11,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/gammazero/workerpool"
 )
 
 const (
@@ -19,10 +20,11 @@ const (
 	CODES_LEN     = len(CODES)
 	USER_AGENT    = "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:50.0) Gecko/20100101 Firefox/50.0"
 	FILE_NAME_LEN = 20         // 文件名字符串长度
-	POOL_MAXSIZE  = 128        // goroutine 池容量
+	POOL_MAXSIZE  = 16         // goroutine 池容量
 	PICS_EXT      = ".jpg"     // 图片后缀
 	PICS_DIR      = "pics"     // 存放图片文件夹
 	URLS_DATA     = "data.txt" // url 数据来源
+	RETRY_TIMES   = 3
 )
 
 // 初始化操作
@@ -63,12 +65,27 @@ func getResponse(url string) *http.Response {
 // 下载图片
 func downloadPics(url string) {
 	fileName := randStr() + PICS_EXT
-	localFile, _ := os.Create(path.Join(PICS_DIR, fileName))
-	fmt.Println("Download pics:", fileName)
-	if _, err := io.Copy(localFile, getResponse(url).Body); err != nil {
-		fmt.Println(err)
+	localFile, err := os.Create(path.Join(PICS_DIR, fileName))
+	if err != nil {
+		fmt.Println("Failed opening local file: " + err.Error())
+		return
 	}
 	defer localFile.Close()
+	fmt.Println("Download pics:", fileName)
+	var resp *http.Response
+	for retry := 0; retry < RETRY_TIMES; retry++ {
+		resp = getResponse(url)
+		if resp != nil && resp.StatusCode == 200 {
+			break
+		}
+	}
+	if resp != nil && resp.StatusCode != 200 {
+		fmt.Println("Failed requesting " + url)
+		return
+	}
+	if _, err := io.Copy(localFile, resp.Body); err != nil {
+		fmt.Println(err)
+	}
 }
 
 // 返回随机字符串，用作函数名
@@ -91,11 +108,20 @@ func main() {
 	start := time.Now()
 	f, _ := os.Open(URLS_DATA)
 	scanner := bufio.NewScanner(bufio.NewReader(f))
+	urlIsRead := make(chan bool)
 	for scanner.Scan() {
-		wp.SubmitWait(func() { downloadPics(scanner.Text()) })
+		wp.Submit(func() {
+			url := scanner.Text()
+			urlIsRead <- true
+			downloadPics(url)
+		})
+		select {
+		case <-urlIsRead:
+			break
+		}
 	}
 	// 等待所有任务完成
-	wp.Stop()
+	wp.StopWait()
 	elapsed := time.Since(start)
 	fmt.Println("Elapsed: ", elapsed)
 }
